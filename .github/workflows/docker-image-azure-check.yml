@@ -1,6 +1,10 @@
 name: Docker Image CI - AzureCheck
 
-on: [push]
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
   build-secure-and-push:
@@ -8,10 +12,16 @@ jobs:
     steps:
     - uses: actions/checkout@master
 
-    - run: docker build . -t ${{ secrets.CONTAINER_REGISTRY }}/python3:${{ github.sha }}
-    
-    - run: docker push ${{ secrets.CONTAINER_REGISTRY }}/python3:${{ github.sha }}
-    
-    - uses: azure/container-scan@v0
+    - run: docker build . -t contoso.azurecr.io/k8sdemo:${{ github.sha }}
+      
+    - uses: Azure/container-scan@v0
       with:
-        image-name: my-image:my-tag
+        image-name: contoso.azurecr.io/k8sdemo:${{ github.sha }}
+    
+    - uses: Azure/docker-login@v1
+      with:
+        login-server: contoso.azurecr.io
+        username: ${{ secrets.REGISTRY_USERNAME }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+    
+    - run: docker push contoso.azurecr.io/k8sdemo:${{ github.sha }}
